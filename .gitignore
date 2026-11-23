@@ -1,0 +1,13 @@
+.env
+.venv/
+node_modules/
+.expo/
+dist/
+__pycache__/
+.pytest_cache/
+.local/
+.vercel/
+.env.*
+!.env.example
+.vercel
+.env*

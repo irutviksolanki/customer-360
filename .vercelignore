@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+.venv/
+.local/
+.expo/
+node_modules/
+dist/
+android/
+ios/
+__pycache__
+.pytest_cache
+backend/test_*.py
+tests
+*.zip

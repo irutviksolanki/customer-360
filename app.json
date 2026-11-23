@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Customer360 by Welspun GCC",
+    "slug": "gcc360",
+    "version": "0.1.0",
+    "plugins": [
+      "expo-sharing",
+      "expo-secure-store",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#1D5179",
+          "image": "./assets/splash-lockup.png",
+          "imageWidth": 300,
+          "resizeMode": "contain",
+          "android": {
+            "image": "./assets/splash-icon.png",
+            "imageWidth": 100,
+            "backgroundColor": "#1D5179"
+          }
+        }
+      ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.gcc360.app",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.gcc360.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    }
+  }
+}

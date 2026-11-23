@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS users(id uuid PRIMARY KEY, email text UNIQUE NOT NULL, name text NOT NULL, password_hash text NOT NULL);
+CREATE TABLE IF NOT EXISTS customers(id uuid PRIMARY KEY, owner_id uuid NOT NULL REFERENCES users(id), name text NOT NULL, business_unit text NOT NULL DEFAULT '', stakeholders text NOT NULL DEFAULT '');
+CREATE TABLE IF NOT EXISTS meetings(id uuid PRIMARY KEY, owner_id uuid NOT NULL REFERENCES users(id), customer_id uuid NOT NULL REFERENCES customers(id), meeting_date date NOT NULL, summary text NOT NULL, sentiment text NOT NULL CHECK(sentiment IN ('positive','neutral','concerned','critical')), concerns text NOT NULL DEFAULT '', appreciation text NOT NULL DEFAULT '');
+CREATE TABLE IF NOT EXISTS actions(id uuid PRIMARY KEY, owner_id uuid NOT NULL REFERENCES users(id), customer_id uuid NOT NULL REFERENCES customers(id), description text NOT NULL, due_date date NOT NULL, status text NOT NULL DEFAULT 'open' CHECK(status IN ('open','in progress','closed')), closure_remarks text NOT NULL DEFAULT '', CHECK(status <> 'closed' OR length(trim(closure_remarks)) > 0));
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers FORCE ROW LEVEL SECURITY;
+ALTER TABLE meetings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE meetings FORCE ROW LEVEL SECURITY;
+ALTER TABLE actions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE actions FORCE ROW LEVEL SECURITY;
+CREATE POLICY ownership ON customers USING(owner_id = nullif(current_setting('app.user_id',true),'')::uuid) WITH CHECK(owner_id = nullif(current_setting('app.user_id',true),'')::uuid);
+CREATE POLICY ownership ON meetings USING(owner_id = nullif(current_setting('app.user_id',true),'')::uuid) WITH CHECK(owner_id = nullif(current_setting('app.user_id',true),'')::uuid AND EXISTS(SELECT 1 FROM customers WHERE id=customer_id));
+CREATE POLICY ownership ON actions USING(owner_id = nullif(current_setting('app.user_id',true),'')::uuid) WITH CHECK(owner_id = nullif(current_setting('app.user_id',true),'')::uuid AND EXISTS(SELECT 1 FROM customers WHERE id=customer_id));
+CREATE INDEX meetings_customer ON meetings(customer_id,meeting_date DESC);
+CREATE INDEX actions_customer ON actions(customer_id,due_date);
