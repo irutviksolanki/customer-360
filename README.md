@@ -302,13 +302,38 @@ If adb is not on PATH, macOS's default is "$HOME/Library/Android/sdk/platform-to
 
 ### Physical phone
 
-Put phone and computer on the same reachable network. Set EXPO_PUBLIC_API_URL to http://YOUR_COMPUTER_LAN_IP:8000. Keep FastAPI bound to 0.0.0.0 and run:
+For a local backend, put phone and computer on the same reachable network. Set EXPO_PUBLIC_API_URL to `http://YOUR_COMPUTER_LAN_IP:8000`, keep FastAPI bound to `0.0.0.0`, and run:
 
 ```sh
 npm start -- --lan --port 8081
 ```
 
 Scan with compatible Expo Go and allow ports 8000/8081 through your development firewall. On a phone, localhost means the phone. Expo's tunnel option does not automatically expose the separate FastAPI server.
+
+For the current deployed backend, retain this value in `.env` before starting Expo:
+
+```env
+EXPO_PUBLIC_API_URL=https://customer360-snowy.vercel.app
+```
+
+Then start Expo Go using a tunnel and scan the newly generated QR code:
+
+```sh
+npx expo start --tunnel ngrok --clear
+```
+
+If Expo reports that it cannot create a signed tunnel, the `ngrok` fallback above is required. If prompted, approve installation of `@expo/ngrok`. Never use `--localhost` for a physical device: it points back to the phone, not to the Mac.
+
+### Installable Android APK
+
+Expo Go is for development only. To install Customer360 directly on an Android phone, create an internal-distribution APK through EAS Build. `eas.json` contains the `preview` profile for this purpose.
+
+```sh
+npx eas-cli@latest login
+npx eas-cli@latest build --platform android --profile preview
+```
+
+Approve the prompts to create/link the Expo project and create Android credentials. EAS prints a build page URL. Open that URL on the Android device, download the `.apk`, allow the browser or Files app to install unknown apps when Android asks, and install it. The installed APK uses the `EXPO_PUBLIC_API_URL` baked into the build, so rebuild after changing that value. Uninstall an older Customer360 package first if Android reports a signature conflict.
 
 ## Test, seed, and troubleshoot
 
@@ -376,7 +401,7 @@ On macOS inspect listeners with lsof -nP -iTCP:8000 -sTCP:LISTEN (or port 8081).
 
 vercel.json builds the Expo web export and serves dist. API/auth/profile/docs paths route to api/index.py, which exports FastAPI. Other frontend routes fall back to index.html. Root requirements.txt includes backend dependencies. .vercelignore excludes local secrets, environments, logs, and generated files.
 
-The deployment configuration has not yet been validated with a successful live Vercel deployment. Vercel hosts the web frontend and API; it does not host your Mac's database or distribute mobile installation packages.
+Vercel hosts the web frontend and API; it does not host your Mac's database or distribute mobile installation packages. The configured production application is available at `https://customer360-snowy.vercel.app`. Treat this URL as the backend origin for mobile builds.
 
 ### 1. Provision PostgreSQL
 
@@ -425,6 +450,17 @@ COMMIT;
 
 Apply as the restricted role so table ownership matches local setup. Existing databases require inspection and only missing migrations. Do not run schema migrations automatically on each web build. Local accounts/data do not transfer automatically; register in the new environment or plan a separate data migration.
 
+For a Vercel Neon integration, open **Storage** in Vercel, select the Neon database, then open **Query** or **Data Editor**. The schema is under `public`. Migrations create empty tables; they do not create accounts, customers, or reviews. Register a user through the deployed application first, then create records through the app. Do not manually insert a `users.password_hash` value.
+
+To check whether production has data, run this in Neon Query:
+
+```sql
+SELECT 'users' AS table_name, COUNT(*) AS rows FROM users
+UNION ALL SELECT 'customers', COUNT(*) FROM customers
+UNION ALL SELECT 'meetings', COUNT(*) FROM meetings
+UNION ALL SELECT 'actions', COUNT(*) FROM actions;
+```
+
 ### 3. Link Vercel and set secrets
 
 These commands work in macOS terminals and PowerShell:
@@ -448,12 +484,12 @@ For preview deployments, repeat environment configuration with preview instead o
 ### 4. Publish and verify
 
 ```sh
-npx vercel --prod
+npx vercel --prod --archive=tgz
 ```
 
 Open the URL Vercel prints. Test /health, /docs, registration/login, customer creation, interaction submission, profile editing, logout, and owner isolation. Diagnose errors in Vercel Runtime Logs by X-Request-ID.
 
-For later updates, run checks and npx vercel --prod again. Keep .vercel out of source control. For automatic Git deployments, push the project to a repository, import it into Vercel, use the project root as Root Directory, and retain vercel.json settings.
+For later updates, run checks and `npx vercel --prod --archive=tgz` again. The archive flag avoids Vercel's file-count limit for a checkout that includes generated native `android` and `ios` directories. Keep `.vercel` out of source control. For automatic Git deployments, push the project to a repository, import it into Vercel, use the project root as Root Directory, and retain `vercel.json` settings.
 
 ### Limits and mobile configuration
 
