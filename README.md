@@ -62,7 +62,7 @@ Psycopg connection contexts commit successful operations and roll back failures.
 | GET /health | Health response |
 | GET /docs, GET /openapi.json | Swagger UI and API schema |
 
-Swagger: http://localhost:8000/docs. Log in/register there, copy the returned token, click Authorize, and paste it without the Bearer prefix. Do not share tokens in screenshots. A health response alone does not verify database connectivity: also test login and a customer read/write.
+Production API and Swagger: https://customer360-snowy.vercel.app/docs. Log in/register there, copy the returned token, click Authorize, and paste it without the Bearer prefix. Do not share tokens in screenshots. A health response alone does not verify database connectivity: also test login and a customer read/write. Local Swagger is available at http://localhost:8000/docs only when running the backend locally.
 
 ### Authentication
 
@@ -204,6 +204,8 @@ Use your registered account UUID. Do not disable RLS just to inspect data. Eleva
 
 ## Run locally on macOS
 
+The hosted application is available at https://customer360-snowy.vercel.app. Open that URL to use the deployed web app; no local server is required. The commands below are only for local development.
+
 One-time dependency installation from the project root:
 
 ```sh
@@ -229,9 +231,12 @@ npm start -- --localhost --port 8081
 
 Press w for web, i for iOS, or a for Android. Use one Metro instance for all platforms. A browser-only alternative is npm run web -- --localhost --port 8081.
 
-- Website: http://localhost:8081
-- Swagger: http://localhost:8000/docs
-- Health: http://localhost:8000/health
+- Production website: https://customer360-snowy.vercel.app
+- Production Swagger: https://customer360-snowy.vercel.app/docs
+- Production health: https://customer360-snowy.vercel.app/health
+- Local website: http://localhost:8081
+- Local Swagger: http://localhost:8000/docs
+- Local health: http://localhost:8000/health
 
 Use the actual Metro URL if you deliberately choose another port; add that exact origin to WEB_ORIGIN. An activated Python environment does not prevent npm from working. Stop each server with Ctrl+C in its own terminal.
 
