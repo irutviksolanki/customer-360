@@ -6,9 +6,11 @@ import { Text, fonts } from './typography';
 import { useTheme } from './theme';
 
 const steps = [
-  ['LayoutDashboard', 'Your relationship overview', 'See customers, recent activity, open commitments and the signals that need your attention.'],
-  ['MessageSquare', 'Capture every conversation', 'Log meetings and feedback once so the whole team can work from the same customer context.'],
-  ['ListTodo', 'Turn context into action', 'Assign commitments, due dates and owners, then prepare for your next customer connect.'],
+  ['LayoutDashboard', 'Start from your overview', 'The Overview brings together customer health, recent conversations, open commitments and what needs your attention.'],
+  ['Building2', 'Create your customer view', 'Open Customers to add a relationship, see stakeholders and review the complete history for that account.'],
+  ['MessageSquare', 'Capture every conversation', 'Use Log interaction after a meeting to save the summary, feedback, sentiment and important themes for your team.'],
+  ['ListTodo', 'Turn context into action', 'Add commitments with an owner and due date. Track progress in Action tracker until the work is complete and confirmed.'],
+  ['FileText', 'Prepare and learn before the next connect', 'Use a meeting brief to review past feedback and commitments. Insights helps you spot sentiment and relationship patterns across customers.'],
 ] as const;
 
 export default function AppTour({ visible, onComplete }: { visible: boolean; onComplete: () => void }) {
