@@ -14,6 +14,8 @@ import LoginScreen from './src/LoginScreen';
 import {authenticate,signOut,sessionClient} from './src/api';
 import {sessionKey} from './src/sessionStorage';
 import {ThemeProvider,useTheme} from './src/theme';
+import AppTour from './src/AppTour';
+import {completeTour,hasCompletedTour} from './src/tourStorage';
 if(Platform.OS==='web') require('./src/web.css');
 if(Platform.OS!=='web'){
  void SplashScreen.preventAutoHideAsync().catch(()=>{});
@@ -33,11 +35,13 @@ function AppContent(){
  const {colors:C}=useTheme();
  const [restoring,setRestoring]=useState(true);
  const [sessionId,setSessionId]=useState('');
+ const [tourUserId,setTourUserId]=useState('');
+ const [showTour,setShowTour]=useState(false);
  const [passwordVisible,setPasswordVisible]=useState(false);
  const [user,U]=useState(''),[reg,R]=useState(false),[form,F]=useState({name:'',email:'',password:''}),[busy,B]=useState(false),[error,E]=useState('');
  useEffect(()=>{
    let active=true;
-   const unsubscribe=sessionClient.subscribe(value=>{if(active){U(value?.name||'');setSessionId(value?.session_id||'');if(!value)setPasswordVisible(false)}});
+   const unsubscribe=sessionClient.subscribe(value=>{if(active){U(value?.name||'');setSessionId(value?.session_id||'');setTourUserId(value?.user_id||'');if(!value){setPasswordVisible(false);setShowTour(false)}else if(value.user_id){void hasCompletedTour(value.user_id).then(completed=>{if(active&&!completed)setShowTour(true)})}}});
    const restore=()=>sessionClient.restore().catch(()=>{if(active)E('Could not restore your session. Check device storage and retry.')});
    restore().finally(()=>{if(active)setRestoring(false)});
    const resume=AppState.addEventListener('change',state=>{if(state==='active')void restore()});
@@ -48,7 +52,7 @@ function AppContent(){
    return()=>{active=false;unsubscribe();resume.remove();clearInterval(expire);if(Platform.OS==='web'){window.removeEventListener('storage',storage);window.removeEventListener('focus',focus)}};
  },[]);
  if(restoring)return <SafeAreaView style={{flex:1,alignItems:'center',justifyContent:'center',backgroundColor:C.bg}}><ActivityIndicator color={C.green}/><Text style={{marginTop:12}}>Restoring your session…</Text></SafeAreaView>;
- async function submit(){B(true);E('');try{const d=await authenticate(reg?'register':'login',form);U(d.name);F({...form,password:''});setPasswordVisible(false)}catch(e:any){E(e.message)}finally{B(false)}}
+ async function submit(){B(true);E('');try{const d=await authenticate(reg?'register':'login',form);U(d.name);setTourUserId(d.user_id||'');F({...form,password:''});setPasswordVisible(false);if(d.user_id&&!await hasCompletedTour(d.user_id))setShowTour(true)}catch(e:any){E(e.message)}finally{B(false)}}
  const login=<LoginScreen reg={reg} form={form} busy={busy} error={error} onChange={(key,value)=>F(previous=>({...previous,[key]:value}))} onSubmit={submit} onToggleMode={()=>{R(!reg);E('');setPasswordVisible(false)}}/>;
- return <SafeAreaView edges={user?['top','left','right']:['top','right','bottom','left']} style={{flex:1,backgroundColor:C.bg}}>{user?<Workspace key={sessionId} userName={user} onSignOut={async()=>{await signOut()}}/>:login}</SafeAreaView>
+ return <SafeAreaView edges={user?['top','left','right']:['top','right','bottom','left']} style={{flex:1,backgroundColor:C.bg}}>{user?<><Workspace key={sessionId} userName={user} onSignOut={async()=>{await signOut()}}/><AppTour visible={showTour} onComplete={async()=>{if(tourUserId)await completeTour(tourUserId);setShowTour(false)}}/></>:login}</SafeAreaView>
 }
